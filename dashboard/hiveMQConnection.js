@@ -1,7 +1,4 @@
-// ── HIVEMQ CREDENTIALS ───────────────────────────────────────
-const MQTT_HOST = "a7248e8d9e4740ed8c35e534e8b7ed36.s1.eu.hivemq.cloud";
-const MQTT_USER = "oAswYJC19j3KYdPsFRkk";
-const MQTT_PASS = "9xzDXuAWF4aQzVVXG8FG";  
+// ── HIVEMQ CREDENTIALS (in config.js) ────────────────────────────────────────
 const MQTT_TOPICS = ["esp32/r4/status", "esp32/q/status"]; // subscribe to both device status
 // ─────────────────────────────────────────────────────────────────
 

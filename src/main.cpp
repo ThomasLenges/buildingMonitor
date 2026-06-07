@@ -4,16 +4,14 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <Adafruit_NeoPixel.h>
+#include "credentials.h"
 
 // ── WiFi ──────────────────────────────────────────────────────────
-const char* WIFI_SSID = "Zyxel_57B9";      
-const char* WIFI_PASS = "4k8hkk7c7rc7t8e3"; 
+// Credentials in credetials.h
 
 // ── HiveMQ ────────────────────────────────────────────────────────
-const char* MQTT_HOST = "a7248e8d9e4740ed8c35e534e8b7ed36.s1.eu.hivemq.cloud";
+// Credentials in credetials.h
 const int   MQTT_PORT = 8883;                                // TLS encryption port (server assumes anything on port 8883 is MQTT over TLS)
-const char* MQTT_USER = "oAswYJC19j3KYdPsFRkk";                     
-const char* MQTT_PASS = "9xzDXuAWF4aQzVVXG8FG";  
 
 // ── MQTT Topics ───────────────────────────────────────────────────
 const char* TOPIC_R4 = "esp32/r4/status";
