@@ -1,0 +1,180 @@
+/* General */
+* { box-sizing: border-box; margin: 0; padding: 0; } /* Reset default styles and use border-box for easier sizing (Without border-box: width: 200px + padding: 20px = actually 240px wide) (With border-box: width: 200px + padding: 20px = still 200px wide) */
+
+body {
+    background: #0d0f12;
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace; /* if Courier New is missing, use whatever monospace font the system has installed */
+    min-height: 100vh; /* Take all remaining vertical space */
+    padding: 2rem; /* In all directions */
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem; /* Outside of the element */
+    border-bottom: 1px solid #1e2530;
+    padding-bottom: 1.25rem; /* Inside the element */
+}
+
+h1 {
+    font-size: 1.1rem;
+    font-weight: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+/* Broker status */
+#broker-status {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between the dot and the label */
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+#broker-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%; /* For dot to be a circle */
+    background: #334155;
+    transition: background 0.3s; /* Smooth color change when status updates */
+}
+
+#broker-dot.connected    { background: #22c55e; } 
+#broker-dot.disconnected { background: #ef4444; }
+#broker-dot.connecting   { background: #f59e0b; animation: pulse 1s infinite; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+}
+
+/* Message log */
+.section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.75rem;
+}
+
+#message-log {
+    background: #0a0c0f;
+    border: 1px solid #1e2530;
+    border-radius: 6px;
+    padding: 1rem;
+    height: 320px;
+    overflow-y: auto; /* Show scrollbar if content exceeds height */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.log-entry {
+    display: grid;
+    grid-template-columns: 7rem 10rem 1fr; /* 1fr (1 fraction unit) = take all remaining space */
+    gap: 1rem;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    border-bottom: 1px solid #0d0f1244;
+    padding-bottom: 4px;
+    animation: fadein 0.2s ease;
+}
+
+/*
+ease         starts slow, speeds up, ends slow  (natural feel)
+linear       constant speed throughout (mechanical feel)
+ease-in      starts slow, ends fast
+ease-out     starts fast, ends slow
+ease-in-out  slow at both ends, fast in middle
+*/
+
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.log-time    { color: #475569; }
+.log-topic   { color: #38bdf8; }
+.log-payload { color: #a3e635; }
+
+#empty-state {
+    color: #334155;
+    font-size: 0.8rem;
+    margin: auto;
+    text-align: center;
+    line-height: 2;
+}
+
+/* Stats row */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Equivalent to 1fr 1fr 1fr */
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #111318;
+    border: 1px solid #1e2530;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.4rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    color: #e2e8f0;
+}
+
+/* Device cards */
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.device-card {
+    background: #111318;
+    border: 1px solid #1e2530;
+    border-radius: 6px;
+    padding: 1.5rem 1.25rem;
+    transition: border-color 0.4s;
+}
+
+.device-card.connected    { border-color: #22c55e55; }  /* faint green border */
+.device-card.disconnected { border-color: #ef444455; }  /* faint red border */
+
+.device-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #334155;
+    transition: background 0.3s;
+}
+
+.device-dot.connected    { background: #22c55e; }
+.device-dot.disconnected { background: #ef4444; }
+
+.device-status {
+    font-size: 1.1rem;
+    color: #475569;       /* gray default when waiting */
+    transition: color 0.3s;
+}
+
+.device-status.connected    { color: #22c55e; } 
+.device-status.disconnected { color: #ef4444; }  
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeMonitor Dashboard</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <link rel='stylesheet' href='styles.css'>
+  </head>
+
+  <body>
+    <header>
+      <h1>ESP32 Gateway Dashboard</h1>
+      <div id="broker-status">
+        <div id="broker-dot" class="connecting"></div>
+        <span id="broker-label">connecting...</span>
+      </div>
+    </header>
+
+    <!-- Device Status Cards -->
+    <div class="section-label">Device connections</div>
+    <div class="device-grid">
+
+      <div class="device-card" id="card-r4">
+        <div class="device-header">
+          <span class="device-name">UNO-R4</span>
+          <div class="device-dot" id="dot-r4"></div>
+        </div>
+        <div class="device-status" id="status-r4">waiting...</div>
+        <div class="device-time">Last update: <span id="time-r4">—</span></div>
+      </div>
+
+      <div class="device-card" id="card-q">
+        <div class="device-header">
+          <span class="device-name">UNO-Q</span>
+          <div class="device-dot" id="dot-q"></div>
+        </div>
+        <div class="device-status" id="status-q">waiting...</div>
+        <div class="device-time">Last update: <span id="time-q">—</span></div>
+      </div>
+
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Messages received</div>
+        <div class="stat-value" id="msg-count">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last received</div>
+        <div class="stat-value" id="last-time">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Topic</div>
+        <div class="stat-value" style="font-size: 0.9rem; padding-top: 0.35rem;">esp32/r4/status<br>esp32/q/status</div>
+      </div>
+    </div>
+
+    <div class="section-label">Live message log</div>
+    <div id="message-log">
+      <div id="empty-state">Waiting for messages...<br>Make sure the ESP32-S3 is running</div>
+    </div>
+  </body>
+
+  <script src="hiveMQConnection.js"></script>
+</html>
