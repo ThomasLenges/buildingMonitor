@@ -1,0 +1,41 @@
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject secrets into config.js
+        run: |
+          cat > dashboard/config.js << EOF
+          const MQTT_HOST = "${{ secrets.MQTT_HOST }}";
+          const MQTT_USER = "${{ secrets.MQTT_USER }}";
+          const MQTT_PASS = "${{ secrets.MQTT_PASS }}";
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload dashboard folder
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
