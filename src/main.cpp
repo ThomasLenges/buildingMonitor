@@ -7,10 +7,10 @@
 #include "credentials.h"
 
 // ── WiFi ──────────────────────────────────────────────────────────
-// Credentials in credetials.h
+// Credentials in credetials.h (WIFI_SSID and WIFI_PASS)
 
 // ── HiveMQ ────────────────────────────────────────────────────────
-// Credentials in credetials.h
+// Credentials in credetials.h (MQTT_HOST, MQTT_USER, MQTT_PASS)
 const int   MQTT_PORT = 8883;                                // TLS encryption port (server assumes anything on port 8883 is MQTT over TLS)
 
 // ── MQTT Topics ───────────────────────────────────────────────────
