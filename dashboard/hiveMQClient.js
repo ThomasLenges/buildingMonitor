@@ -1,7 +1,8 @@
-// ── HIVEMQ CREDENTIALS (in config.js) ────────────────────────────────────────
-const MQTT_TOPICS = ["esp32/r4/status", "esp32/q/status"]; // subscribe to both device status
-// ─────────────────────────────────────────────────────────────────
+// ───────────────────────── MQTT TOPICS ─────────────────────────
+const MQTT_TOPICS = ["esp32/r4/status", "esp32/q/status", "esp32/r4/temperature"]; // subscribe to both device status and temperature
+document.getElementById("topics-display").innerText = MQTT_TOPICS.join("\n"); // Display the subscribed topics in the dashboard
 
+// ───────────────────────── DOM REFERENCES ─────────────────────────
 const brokerDot   = document.getElementById("broker-dot");
 const brokerLabel = document.getElementById("broker-label");
 const log         = document.getElementById("message-log");
@@ -11,8 +12,9 @@ const lastTime    = document.getElementById("last-time");
 
 let count = 0;
 
-// 8884 MQTT broker over wss browser
-// 8883 ESP32 to MQTT broker
+// ───────────────────────── MQTT CLIENT ─────────────────────────
+// 8884 → MQTT over WSS (browser)
+// 8883 → MQTT over TLS (ESP32)
 const client = mqtt.connect(`wss://${MQTT_HOST}:8884/mqtt`, { // wss: WebSocket Secure (connection stays open permanently both sides can send messages at any time in either direction unlike HTTP where browser asks and servers answers)
     username:  MQTT_USER,
     password:  MQTT_PASS,
@@ -36,23 +38,29 @@ client.on("reconnect", () => {
     brokerLabel.innerText = "reconnecting...";
 });
 
+// ───────────────────────── MQTT CLIENT MESSAGE HANDLER ─────────────────────────
 client.on("message", (topic, payload) => { // receives topic and payload as parameters when a message is received
     const message = payload.toString();
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-GB");
+
+    // ────────────── UPDATE LAST RECEIVED ──────────────
+    lastTime.innerText = timeStr;
 
     // Device cards
     if (topic === "esp32/r4/status") updateDevice("r4", message);
     if (topic === "esp32/q/status")  updateDevice("q", message);
+    if (topic === "esp32/r4/temperature") updateTemperature(message, now);
 
     // Message log
     if (emptyState.parentNode) emptyState.remove(); // Remove the "No messages yet" text if it's still there
 
+    // ────────────── UPDATE MESSAGES RECEIVED ──────────────
     count++;
     msgCount.innerText = count;
 
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString("en-GB");
-    lastTime.innerText = timeStr;
-
+    // ────────────── UPDATE MESSAGES LOGS ──────────────
     const entry = document.createElement("div");
     entry.className = "log-entry";
     // Without template literals — "<span>" + timeStr + "</span>"
@@ -67,17 +75,4 @@ client.on("message", (topic, payload) => { // receives topic and payload as para
     log.scrollTop = log.scrollHeight; // Auto-scroll to the bottom of the log when a new message is added
 });
 
-function updateDevice(id, status) {
-    const card     = document.getElementById(`card-${id}`);
-    const dot      = document.getElementById(`dot-${id}`);
-    const statusEl = document.getElementById(`status-${id}`);
-    const timeEl   = document.getElementById(`time-${id}`);
 
-    const isConnected = status === "connected";
-
-    card.className     = "device-card "   + (isConnected ? "connected" : "disconnected");
-    dot.className      = "device-dot "    + (isConnected ? "connected" : "disconnected");
-    statusEl.className = "device-status " + (isConnected ? "connected" : "disconnected");
-    statusEl.innerText = status;
-    timeEl.innerText   = new Date().toLocaleTimeString("en-GB");
-}

@@ -16,10 +16,15 @@ const int   MQTT_PORT = 8883;                                // TLS encryption p
 // ── MQTT Topics ───────────────────────────────────────────────────
 const char* TOPIC_R4 = "esp32/r4/status";
 const char* TOPIC_Q  = "esp32/q/status";
+const char* TOPIC_R4_TEMP = "esp32/r4/temperature";
+const char* TOPIC_R4_LED       = "esp32/r4/led";          
+const char* TOPIC_R4_LED_STATE = "esp32/r4/led/state";    
 
 // ── BLE ───────────────────────────────────────────────────────────
 const char* SERVICE_UUID = "181A";
-const char* CHAR_UUID    = "2A56";
+const char* CHAR_UUID_COUNTER = "2A56";
+const char* CHAR_UUID_TEMP = "2A1F";
+const char* CHAR_UUID_LED      = "2A57";
 const char* NAME_R4      = "UNO-R4";
 const char* NAME_Q       = "UNO-Q";
 
@@ -32,6 +37,14 @@ bool foundQ  = false;
 
 WiFiClientSecure espClient;
 PubSubClient     mqttClient(espClient);
+
+struct R4Chars {
+    NimBLERemoteCharacteristic* counter = nullptr;
+    NimBLERemoteCharacteristic* temp    = nullptr;
+    NimBLERemoteCharacteristic* led     = nullptr;
+  };
+
+R4Chars r4Chars;
 
 // ── LED ───────────────────────────────────────────────────────────
 Adafruit_NeoPixel LED_RGB(1, 38, NEO_GRBW + NEO_KHZ800);
@@ -55,13 +68,18 @@ void connectWiFi() {
 }
 
 // ── MQTT ──────────────────────────────────────────────────────────
+  // Forward declaration
+void mqttCallback(const char* topic, byte* payload, unsigned int length);
+
 void connectMQTT() {
   espClient.setInsecure();
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  mqttClient.setCallback(mqttCallback);
   Serial.print("Connecting to HiveMQ");
   while (!mqttClient.connected()) {
     if (mqttClient.connect("ESP32-S3-Gateway", MQTT_USER, MQTT_PASS)) {
       Serial.println("\nHiveMQ connected ✓");
+      mqttClient.subscribe(TOPIC_R4_LED);
     } else {
       Serial.print(".");
       delay(500);
@@ -84,24 +102,44 @@ void publishStatus(const char* topic, const char* status) {
   }
 }
 
+// PubSubClient calls callback whenever a message arrives on any subscribed topic with message "payload" an array of bytes of length "length"
+void mqttCallback(const char* topic, byte* payload, unsigned int length) {
+  String message;
+  for (int i = 0; i < length; i++) message += (char)payload[i];
+
+  Serial.printf("MQTT received [%s]: %s\n", topic, message.c_str());
+
+  if (String(topic) == TOPIC_R4_LED) {
+    if (r4Chars.led && r4Chars.led->canWrite()) {
+      r4Chars.led->writeValue(message.c_str());
+      mqttClient.publish(TOPIC_R4_LED_STATE, message.c_str(), true);
+      Serial.printf("LED set to: %s\n", message.c_str());
+    }
+  }
+}
+
 // ── BLE Connect ───────────────────────────────────────────────────
 NimBLERemoteCharacteristic* connectToPeripheral(
     NimBLEClient*& pClient,
     const NimBLEAddress& address,
     const char* name,
-    const char* mqttTopic) {        
+    const char* mqttTopic,
+    const char* charUUID) {        
 
-  pClient = NimBLEDevice::createClient();
-  pClient->setConnectionParams(12, 12, 0, 300);
+  // Connect only if not already connected
+  if (!pClient || !pClient->isConnected()) {
+    pClient = NimBLEDevice::createClient();
+    pClient->setConnectionParams(12, 12, 0, 300);
 
-  if (!pClient->connect(address)) {
-    Serial.printf("Connection failed: %s\n", name);
-    NimBLEDevice::deleteClient(pClient);
-    pClient = nullptr;
-    return nullptr;
+    if (!pClient->connect(address)) {
+      Serial.printf("Connection failed: %s\n", name);
+      NimBLEDevice::deleteClient(pClient);
+      pClient = nullptr;
+      return nullptr;
+    }
+    Serial.printf("Connected: %s\n", name);
+    publishStatus(mqttTopic, "connected"); 
   }
-  Serial.printf("Connected: %s\n", name);
-  publishStatus(mqttTopic, "connected"); 
 
   NimBLERemoteService* pService = pClient->getService(SERVICE_UUID);
   if (!pService) {
@@ -112,7 +150,7 @@ NimBLERemoteCharacteristic* connectToPeripheral(
     return nullptr;
   }
 
-  NimBLERemoteCharacteristic* pChar = pService->getCharacteristic(CHAR_UUID);
+  NimBLERemoteCharacteristic* pChar = pService->getCharacteristic(charUUID);
   if (!pChar) {
     pClient->disconnect();
     NimBLEDevice::deleteClient(pClient);
@@ -162,11 +200,12 @@ void loop() {
 
   if (!foundR4 || !foundQ) { Serial.println("Needs to find all devices — retrying..."); return; }
 
-  NimBLERemoteCharacteristic* pCharR4 = nullptr;
   NimBLERemoteCharacteristic* pCharQ  = nullptr;
 
-  pCharR4 = connectToPeripheral(pClientR4, addressR4, NAME_R4, TOPIC_R4); delay(1000);
-  pCharQ  = connectToPeripheral(pClientQ,  addressQ,  NAME_Q,  TOPIC_Q);  delay(1000);
+  r4Chars.counter = connectToPeripheral(pClientR4, addressR4, NAME_R4, TOPIC_R4, CHAR_UUID_COUNTER); delay(1000);
+  r4Chars.temp    = connectToPeripheral(pClientR4, addressR4, NAME_R4, TOPIC_R4, CHAR_UUID_TEMP);    delay(1000);
+  r4Chars.led     = connectToPeripheral(pClientR4, addressR4, NAME_R4, TOPIC_R4, CHAR_UUID_LED);     delay(1000);
+  pCharQ  = connectToPeripheral(pClientQ,  addressQ,  NAME_Q,  TOPIC_Q,  CHAR_UUID_COUNTER);  delay(1000);
 
   // ── Read loop ──────────────────────────────────────────────────
   while (true) {
@@ -175,8 +214,15 @@ void loop() {
     bool anyDisconnected = false;
 
     if (pClientR4 && pClientR4->isConnected()) {
-      if (pCharR4 && pCharR4->canRead()) {
-        Serial.printf("[R4] Counter: %d\n", pCharR4->readValue<int>());
+      if (r4Chars.counter && r4Chars.counter->canRead()) {
+        Serial.printf("[R4] Counter: %d\n", r4Chars.counter->readValue<int>());
+      }
+      if (r4Chars.temp && r4Chars.temp->canRead()) {
+        Serial.printf("[R4] Temp: %.2f\n", r4Chars.temp->readValue<float>());
+        float t = r4Chars.temp->readValue<float>();  // float
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.2f", t);        // float string "23.45"
+        mqttClient.publish(TOPIC_R4_TEMP, buf, true); // publish string
       }
     } else if (pClientR4) {
       anyDisconnected = true;

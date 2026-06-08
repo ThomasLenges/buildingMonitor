@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HomeMonitor Dashboard</title>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script> <!-- MQTT Library  -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel='stylesheet' href='styles.css'>
   </head>
 
@@ -18,19 +19,24 @@
       </div>
     </header>
 
-    <!-- Device Status Cards -->
+    <!-- ───────────────────────────────── DEVICE CONNECTIONS ───────────────────────────────── -->
     <div class="section-label">Device connections</div>
     <div class="device-grid">
-
+      <!-- ──────────────── ARDUINO UNO-R4 Card ──────────────── -->
       <div class="device-card" id="card-r4">
         <div class="device-header">
           <span class="device-name">UNO-R4</span>
           <div class="device-dot" id="dot-r4"></div>
         </div>
         <div class="device-status" id="status-r4">waiting...</div>
+        <div class="device-temp">
+          <div class="temp-dot" id="dot-temp-r4"></div>
+          <span id="temp-value-r4">-</span>
+          <span class="temp-unit">°C</span>
+        </div>
         <div class="device-time">Last update: <span id="time-r4">—</span></div>
       </div>
-
+      <!-- ──────────────── ARDUINO UNO-Q Card ──────────────── -->
       <div class="device-card" id="card-q">
         <div class="device-header">
           <span class="device-name">UNO-Q</span>
@@ -39,30 +45,75 @@
         <div class="device-status" id="status-q">waiting...</div>
         <div class="device-time">Last update: <span id="time-q">—</span></div>
       </div>
-
     </div>
 
     <div class="stats">
+      <!-- ──────────────── MESSAGES RECEIVED ──────────────── -->
       <div class="stat-card">
         <div class="stat-label">Messages received</div>
         <div class="stat-value" id="msg-count">0</div>
       </div>
+      <!-- ──────────────── LAST RECEIVED ──────────────── -->
       <div class="stat-card">
         <div class="stat-label">Last received</div>
         <div class="stat-value" id="last-time">—</div>
       </div>
+      <!-- ──────────────── TOPICS SUBSCRIBED ──────────────── -->
       <div class="stat-card">
-        <div class="stat-label">Topic</div>
-        <div class="stat-value" style="font-size: 0.9rem; padding-top: 0.35rem;">esp32/r4/status<br>esp32/q/status</div>
+        <div class="stat-label">Topics subscribed</div>
+        <div class="stat-value" id="topics-display" style="font-size: 0.9rem; padding-top: 0.35rem;">esp32/r4/status<br>esp32/q/status</div>
       </div>
     </div>
 
-    <div class="section-label">Live message log</div>
+    <!-- ───────────────────────────────── MESSAGES LOGS ───────────────────────────────── -->
+    <div class="section-label">Messages Logs</div>
     <div id="message-log">
       <div id="empty-state">Waiting for messages...<br>Make sure the ESP32-S3 is running</div>
+    </div>
+
+    <!-- ───────────────────────────────── TEMPERATURE RECORDS ───────────────────────────────── -->
+    <div class="section-label">Temperature Records</div>
+    <div id="temp-record">
+      <div id="temp-current">
+        <span id="temp-current-value">-</span>
+        <span class="temp-current-unit">°C</span>
+      </div>
+      <div id="temp-filters">
+        <button class="filter-btn active" data-range="5m">Last 5 min</button>
+        <button class="filter-btn" data-range="1h">Last hour</button>
+        <button class="filter-btn" data-range="1d">Last day</button>
+        <button class="filter-btn" data-range="1w">Last week</button>
+        <button id="clear-btn">Clear History</button>
+      </div>
+      <canvas id="temp-chart" height="200"></canvas> 
+    </div>
+
+    <!-- ───────────────────────────────── RGB LED ───────────────────────────────── -->
+    <div class="section-label">RGB LED Control</div>
+    <div id="led-control">
+
+      <!-- 2D saturation/brightness picker -->
+      <canvas id="led-picker"></canvas>
+
+      <!-- Hue slider -->
+      <canvas id="led-hue"></canvas>
+
+      <!-- Bottom row: preview + hex + buttons -->
+      <div id="led-bottom">
+        <div id="led-preview"></div>
+        <span id="led-hex">#000000</span>
+        <div id="led-buttons">
+          <button class="led-btn" id="led-on">ON</button>
+          <button class="led-btn" id="led-off">OFF</button>
+        </div>
+      </div>
+
     </div>
   </body>
 
   <script src="config.js"></script>
-  <script src="hiveMQConnection.js"></script>
+  <script src="hiveMQClient.js"></script>
+  <script src="deviceCards.js"></script>
+  <script src="temperatureRecords.js"></script>
+  <script src="ledControl.js"></script>
 </html>
